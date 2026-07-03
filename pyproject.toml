@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "verify-suite"
+version = "0.1.0"
+description = "A meta-CLI that unifies the verification-layer family into one spine: it dispatches to each shipped checker as a pluggable dimension, reports every present gate's verdict (absent gates = n/a), rolls up a transparent 1-5 level, and seals the aggregate through verity's audit chain."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "StellarRequiem" }]
+keywords = ["verification", "ci", "orchestration", "audit", "reliability"]
+
+# NOTE: verity-core is the shared sealing substrate (verity.audit.AuditChain).
+# It is a local-only package (no public remote), so it is NOT declared as a
+# hard dependency here — install it into this venv separately. When it is
+# importable, aggregate receipts are sealed; when it is absent, the receipt is
+# still written but flagged unsealed (honest n/a), never a fake seal.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+verify-suite = "verify_suite.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/verify_suite"]

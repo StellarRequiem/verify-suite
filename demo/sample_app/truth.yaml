@@ -1,0 +1,14 @@
+# Declared ground truth for TaskSorter, checked by the firewall dimension.
+# Any README claim that contradicts these facts is flagged.
+facts:
+  - id: prototype_scope
+    severity: HIGH
+    domain_keywords: ["prototype", "trading", "profit", "predictive", "edge"]
+    canonical_terms: ["paper prototype", "deterministic", "no predictive", "no profitability"]
+    forbidden_terms: ["profitable", "proven edge", "beats the market", "real money"]
+
+  - id: sort_key
+    severity: MEDIUM
+    domain_keywords: ["sort", "order", "rank", "urgency"]
+    canonical_terms: ["due_date", "priority", "deterministic sorting"]
+    forbidden_terms: ["machine learning", "neural", "trained model"]

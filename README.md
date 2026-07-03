@@ -49,13 +49,21 @@ unsealed, never as a passing seal.
 ## Install
 
 ```sh
-python -m venv .venv
+python3.12 -m venv .venv     # 3.12 — see the version note below
 .venv/bin/python -m pip install -e ".[dev]"
 ```
 
 The family checkers are separate packages. Install whichever you want active into
 the **same venv** (so their console scripts co-locate with `verify-suite`); any you
 skip will report `n/a`. `verity-core` supplies the seal.
+
+> **Python version.** verify-suite itself runs on `>=3.9`, but two family checkers
+> — `scorecheck` and `groundtruth` — pin `>=3.12,<3.13`. Build the venv on **3.12**
+> so every dimension can resolve; on a newer interpreter those two simply report
+> `n/a` (not installable), which is honest but drops two gates. The checkers pin
+> their shared deps (`verity-core`, `grounded-check`, `calibration-log`) as direct
+> git refs, so if you install from local editable clones, install `verity-core`
+> first, then the leaves with `--no-deps` to avoid a redundant re-fetch.
 
 ## Use
 

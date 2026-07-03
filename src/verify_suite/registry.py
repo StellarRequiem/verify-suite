@@ -51,11 +51,21 @@ def _first_markdown(root: Path, *, prefer: Optional[str] = None) -> Optional[Pat
     return mds[0]
 
 
+# verify-suite's OWN output artifacts (receipt / audit chain / report). They must
+# never be mistaken for a dimension's input — otherwise a second run's artifact
+# glob (e.g. scorecheck's ``*receipt*.json``) picks up our own receipt and the
+# gate errors on a receipt it did not write. Match by our stable filename prefix.
+_OWN_OUTPUT_PREFIX = "verify-suite-"
+
+
 def _find_one(root: Path, *globs: str) -> Optional[Path]:
     for g in globs:
         for p in sorted(root.rglob(g)):
-            if not any(seg in _SKIP for seg in p.parts):
-                return p
+            if any(seg in _SKIP for seg in p.parts):
+                continue
+            if p.name.startswith(_OWN_OUTPUT_PREFIX):
+                continue  # never feed our own output back in as an input
+            return p
     return None
 
 

@@ -1,9 +1,109 @@
-# verify-suite
+# verify-suite — The Verification Layer
 
-**One spine for a family of verification checkers.** `verify-suite` is a meta-CLI
-that dispatches to each shipped checker as a pluggable *dimension*, reports every
-present gate's verdict (absent gates report `n/a`), rolls up a transparent **1–5
-reliability level**, and seals the aggregate through an audit chain.
+> **A verification layer for AI-built software.** One CLI that mechanically
+> adjudicates what an AI build *claims* against what it *ships* — its result-claims,
+> its benchmark scores, its docs and citations, and its **security** — and seals
+> every verdict into one receipt anyone can re-derive.
+
+## The problem
+
+When software is built by an AI, the artifacts that vouch for it are *also* written
+by the AI: the README's "we measured 82% accuracy", the benchmark number in the
+changelog, the citation behind a claim, the "no known vulnerabilities" note. In 2026
+those self-reports are routinely wrong or gamed — benchmark scores swing 10–30 points
+across harnesses and selective submission inflates them, doc claims drift from what
+the code does, citations don't resolve, and **security review is the leg that most
+often ships unchecked**. The checks that would catch each of these exist as separate
+tools — but nothing runs them together and puts their verdicts on the record.
+
+`verify-suite` is that spine. It **orchestrates existing checkers** — it
+re-implements none of them — dispatching to each shipped checker as a pluggable
+*dimension*, reporting every present gate's verdict (absent gates report `n/a`,
+never a fake pass), rolling up a transparent **1–5 reliability level**, and sealing
+the aggregate through one audit chain.
+
+## The composition — spine + nine dimensions
+
+```
+                        ┌───────────────────────────────┐
+                        │   verify-suite  (the spine)    │
+                        │  registry → dispatch → 1–5     │
+                        │  rollup → ONE sealed receipt   │
+                        └───────────────┬───────────────┘
+   shell-out to each checker's own CLI  │  (import only for the shared seal)
+   ┌───────────┬───────────┬────────────┼───────────┬───────────┬───────────┐
+   ▼           ▼           ▼            ▼           ▼           ▼           ▼
+ firewall   verity     grounded    scorecheck  groundtruth  calibration  drift-watch
+ doc-claims result-    citation    benchmark-  dataset-     -log         quality-
+            claim      grounding   claim        commitment  prediction   drift
+            hygiene                receipt                   calibration
+                                    scope-gate ──► authorization scope
+                                    aisec-check ─► AI-app SECURITY leads
+                                          │
+                                          ▼  (import, not re-implemented)
+                                    verity.audit.AuditChain — the shared seal
+```
+
+| Dimension | Powered by (real tool) | What it adjudicates |
+|---|---|---|
+| Doc/output over-claims | **`firewall`** | README/doc claims vs a declared `truth.yaml` |
+| Result-claim hygiene | **`verity`** | statistical soundness of result-claims in markdown |
+| Citation grounding | **`grounded`** | citations resolve to the source they cite |
+| Benchmark-claim receipt | **`scorecheck`** | a published benchmark number re-derives from raw logs |
+| Dataset commitment | **`groundtruth`** | a committed dataset's root still matches |
+| Prediction calibration | **`calibration-log`** | published predictions vs their source of truth |
+| Quality drift | **`drift-watch`** | silent quality-signal erosion |
+| Authorization scope | **`scope-gate`** | a target is inside declared authorized scope |
+| AI-app security leads | **`aisec-check`** | lexical/AST leads for AI-app vuln classes (candidates, not proofs) |
+
+## Run it
+
+```sh
+verify-suite dimensions          # list the 9 dimensions + which gates resolve here
+verify-suite check <path>        # run every dimension, write report + ONE sealed receipt
+```
+
+`check` writes `verify-suite-report.md`, `verify-suite-receipt.json`, and appends
+the rollup to `verify-suite-audit.jsonl`. Exit code is CI-gateable:
+`0` = pass (or nothing applicable) · `1` = review · `2` = refuse.
+
+## The unified sealed receipt
+
+Every run folds all applicable dimensions — claims, docs, citations, **and
+security** — into **one** canonical, float-free receipt sealed through
+`verity.audit`. A committed, path-redacted sample is in
+[`demo/sample-output/`](demo/sample-output/) and re-verifies offline. Its core:
+
+```jsonc
+// verify-suite-receipt.json  (abridged — see demo/sample-output/ for the full file)
+{
+  "payload": {
+    "tool": "verify-suite", "root": "sample_app",
+    "level": 3, "passed": 2, "applicable": 4, "na": 5, "worst": "refuse",
+    "dimensions": [
+      { "key": "docs_claims",  "cli": "firewall",    "status": "pass" },
+      { "key": "citations",    "cli": "grounded",    "status": "pass" },
+      { "key": "result_claims","cli": "verity",      "status": "warn" },
+      { "key": "security",     "cli": "aisec-check", "status": "refuse", "exit_code": 3 },
+      { "key": "benchmark_receipt", "cli": "scorecheck", "status": "na" }
+      // …calibration / groundtruth / drift / scope also n/a — no matching artifact
+    ]
+  },
+  "sealed": true,
+  "entry_hash": "599337be0c7735721781619c42ff4cbfa070fc2a5b267ab4fa787e558f23d15d",
+  "chain_head": "599337be0c7735721781619c42ff4cbfa070fc2a5b267ab4fa787e558f23d15d"
+}
+```
+
+Re-derive it with `verity`'s own verifier — the receipt's `entry_hash` falls out of
+the committed payload and the chain verifies `intact` (see
+[`demo/sample-output/README.md`](demo/sample-output/README.md)). Nothing to trust.
+
+---
+
+**One spine for a family of verification checkers.** The rest of this document is
+the reference: what each dimension composes, the seal, install, and — read it —
+the honest scope.
 
 It **orchestrates existing tools and re-implements none of them.** Every dimension
 shells out to that tool's own CLI. If a tool is not installed, its dimension is
@@ -76,21 +176,34 @@ verify-suite check <repo>        # run all dimensions, write report + sealed rec
 the rollup to `verify-suite-audit.jsonl`. Exit code is CI-gateable:
 `0` = pass (or nothing applicable) · `1` = review · `2` = refuse.
 
-## Honest scope
+## Honest scope — read this
 
-- It **orchestrates**; it does not verify anything itself. A `5/5` means *these
+Every line below is a limit, stated plainly so the pitch above can't be misread.
+
+- **It orchestrates; it does not verify anything itself.** A `5/5` means *these
   specific deterministic gates that applied all passed* — not "provably reliable".
-- The underlying `firewall` / `grounded` checkers are **lexical/deterministic**.
-  This is **not** semantic grounding.
-- The **security** dimension (`aisec-check`) is a **lexical/AST** scanner: its
-  findings are **leads** a human must confirm (expect false positives and
-  negatives), **not** data-flow proofs of exploitability. A `refuse` means "a
-  high/critical-severity lead was found here", not "proven vulnerable".
-- **No track record is claimed.** The calibration dimension only runs if the
-  project ships a published/source pair to reconcile; it does not assert any
-  historical hit-rate.
-- Absent gates are `n/a` and are **excluded from the score** — there is no fake
+  The level is a rollup of gate verdicts, not a reliability guarantee.
+- **The security dimension emits LEADS, not proofs.** `aisec-check` is a
+  **lexical/AST** scanner: it matches syntactic shapes, not data flow or
+  reachability. Every finding is a **candidate a human must confirm** — expect
+  false positives *and* false negatives. A `refuse` means "a high/critical-severity
+  lead was found here — look", **not** "proven exploitable".
+- **The underlying claim/citation checkers are lexical/deterministic.** `firewall`
+  and `grounded` match terms and resolve references syntactically. This is **not**
+  semantic grounding.
+- **The seal is unkeyed = integrity, not tamper-evidence.** The audit chain catches
+  accidental corruption, reordering, and truncation. It does **not** stop a
+  determined forger who controls the receipt file and recomputes the root — that
+  needs a held key or an anchored/published chain head.
+- **`n/a` when a project ships no matching artifact.** A dimension only runs when
+  the project provides the input it checks (a receipt, a committed dataset, a
+  reconcile pair, a drift store, a scope target, source to scan). A gate that isn't
+  installed is `n/a` too. Both are **excluded from the score** — there is no fake
   pass to inflate the level.
+- **No track record is claimed.** verify-suite ships no benchmark corpus and asserts
+  no historical hit-rate. The calibration dimension only reconciles a
+  published/source pair *if the project provides one*; it does not assert any
+  standing accuracy of its own.
 
 ## Demo
 

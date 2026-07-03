@@ -1,0 +1,93 @@
+{
+  "chain_head": "599337be0c7735721781619c42ff4cbfa070fc2a5b267ab4fa787e558f23d15d",
+  "chain_path": "sample_app/verify-suite-audit.jsonl",
+  "entry_hash": "599337be0c7735721781619c42ff4cbfa070fc2a5b267ab4fa787e558f23d15d",
+  "payload": {
+    "applicable": 4,
+    "dimensions": [
+      {
+        "available": true,
+        "cli": "scorecheck",
+        "exit_code": null,
+        "key": "benchmark_receipt",
+        "label": "Benchmark-claim receipt",
+        "status": "na"
+      },
+      {
+        "available": true,
+        "cli": "calibration-log",
+        "exit_code": null,
+        "key": "calibration",
+        "label": "Prediction calibration",
+        "status": "na"
+      },
+      {
+        "available": true,
+        "cli": "grounded",
+        "exit_code": 0,
+        "key": "citations",
+        "label": "Citation grounding",
+        "status": "pass"
+      },
+      {
+        "available": true,
+        "cli": "groundtruth",
+        "exit_code": null,
+        "key": "dataset_commitment",
+        "label": "Dataset commitment",
+        "status": "na"
+      },
+      {
+        "available": true,
+        "cli": "firewall",
+        "exit_code": 0,
+        "key": "docs_claims",
+        "label": "Doc/output over-claims",
+        "status": "pass"
+      },
+      {
+        "available": true,
+        "cli": "drift-watch",
+        "exit_code": null,
+        "key": "drift",
+        "label": "Quality drift",
+        "status": "na"
+      },
+      {
+        "available": true,
+        "cli": "verity",
+        "exit_code": 1,
+        "key": "result_claims",
+        "label": "Result-claim hygiene",
+        "status": "warn"
+      },
+      {
+        "available": true,
+        "cli": "scope-gate",
+        "exit_code": null,
+        "key": "scope",
+        "label": "Authorization scope",
+        "status": "na"
+      },
+      {
+        "available": true,
+        "cli": "aisec-check",
+        "exit_code": 3,
+        "key": "security",
+        "label": "AI-app security leads",
+        "status": "refuse"
+      }
+    ],
+    "level": 3,
+    "na": 5,
+    "passed": 2,
+    "root": "sample_app",
+    "schema": 1,
+    "tool": "verify-suite",
+    "worst": "refuse"
+  },
+  "prev_hash": "GENESIS",
+  "receipt_version": 1,
+  "sealed": true,
+  "seq": 0
+}

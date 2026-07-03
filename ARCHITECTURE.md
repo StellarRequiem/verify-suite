@@ -21,6 +21,7 @@ don't churn); the product name is the external label only.
 | `calibration-log` | Prediction Calibration Log | published predictions reconciled against source of truth |
 | `drift-watch` | Quality-Drift Monitor | early-warning on silent work-quality erosion |
 | `scope-gate` | Authorization Scope Gate | a target is inside declared authorized scope |
+| `aisec-check` | AI-App Security Linter | lexical/AST leads for AI-app vuln classes (candidate findings, not proofs) |
 
 Naming discipline: no mythology or codenames in external materials; state the real
 capability and its limits. The packages themselves are **not renamed** — this is a
@@ -67,7 +68,9 @@ exit_map, module?)` — so adding a gate is one registry row, not new dispatch c
   project, distinct from the gate being absent).
 - **`exit_map(code)`** — the tool's documented exit-code→verdict contract
   (`map_verity` 0/1/2 = pass/warn/refuse · `map_zero_clean` · `map_allow_deny`
-  where scope-gate's DENY is a hard refuse).
+  where scope-gate's DENY is a hard refuse · `map_aisec_severity` folds
+  aisec-check's worst-severity exit — 0 clean=pass · 1/2 low-medium=warn ·
+  3/4 high-critical=refuse).
 - **`score(results)`** — `round(1 + 4 × passed/applicable)` over only the
   dimensions that *applied*. Absent gates and no-artifact gates are `n/a` and are
   never counted, so the level can never be inflated by a fake pass.
@@ -88,3 +91,7 @@ tamper-evidence; key or anchor the head for the stronger property. If
 - It does not fork the hash chain — one `verity-core`, imported.
 - It does not claim semantic grounding (the lexical checkers do not do that) and
   it does not claim any historical track record.
+- It does not claim the **security** dimension proves exploitability. `aisec-check`
+  is a lexical/AST scanner: every finding is a **lead** a human must confirm (false
+  positives and negatives expected), not a data-flow proof. A `refuse` here means
+  "a high/critical-severity lead was found — look here", not "proven vulnerable".

@@ -159,6 +159,19 @@ def map_allow_deny(code: int) -> str:
     return "pass" if code == 0 else "refuse"
 
 
+def map_aisec_severity(code: int) -> str:
+    """aisec-check ``scan``: exit = worst severity (0 none · 1 low · 2 medium ·
+    3 high · 4 critical). Fold into the verify-suite ladder: clean = pass,
+    low/medium leads = warn (a human must confirm), high/critical = refuse."""
+    if code == -1:
+        return "error"
+    if code == 0:
+        return "pass"
+    if code in (1, 2):
+        return "warn"
+    return "refuse"  # 3 (high), 4 (critical), or any higher unknown severity
+
+
 # ── run one dimension ─────────────────────────────────────────────────────────
 def run_dimension(dim: Dimension, root: Path) -> DimensionResult:
     lead = resolve_dimension(dim)

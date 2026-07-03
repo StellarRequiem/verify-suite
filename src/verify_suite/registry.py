@@ -12,13 +12,24 @@ Artifact conventions (kept deliberately simple + inspectable):
   when the project ships the input each expects (a receipt, a committed dataset,
   a reconcile pair, a drift store, a target-file). If the input is absent the
   dimension is n/a for THIS project — never a fake pass.
+* ``security`` shells ``aisec-check scan <root>`` — a read-only lexical/AST source
+  scan for AI-app vulnerability classes. Its findings are LEADS (candidate issues a
+  human must confirm), not proofs; the exit-map folds worst-severity into the
+  verify-suite ladder (0 clean=pass · low/medium=warn · high/critical=refuse). n/a
+  when the project ships no Python to scan.
 """
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
 
-from .core import Dimension, map_allow_deny, map_verity, map_zero_clean
+from .core import (
+    Dimension,
+    map_aisec_severity,
+    map_allow_deny,
+    map_verity,
+    map_zero_clean,
+)
 
 # ── artifact helpers (consent-first: only ever look under the given root) ─────
 _SKIP = {".venv", "node_modules", ".git", "site-packages", "__pycache__"}
@@ -105,6 +116,18 @@ def _cmd_drift(_bin: str, root: Path) -> Optional[list]:
     return ["--store", str(store), "report"]
 
 
+def _cmd_security(_bin: str, root: Path) -> Optional[list]:
+    # aisec-check scan <root>: a read-only lexical/AST source scan. Applicable to
+    # any project that ships Python to scan; n/a otherwise (no fake pass).
+    has_py = any(
+        not any(seg in _SKIP for seg in p.parts)
+        for p in root.rglob("*.py")
+    )
+    if not has_py:
+        return None
+    return ["scan", str(root)]
+
+
 def _cmd_scope(_bin: str, root: Path) -> Optional[list]:
     # scope-gate <target>; only runs if the project declares a scope target file.
     target = _find_one(root, "scope-target.txt")
@@ -137,6 +160,8 @@ DIMENSIONS: list = [
               _cmd_drift, map_zero_clean),
     Dimension("scope", "Authorization scope", "scope-gate",
               _cmd_scope, map_allow_deny, module="scope_gate"),
+    Dimension("security", "AI-app security leads", "aisec-check",
+              _cmd_security, map_aisec_severity),
 ]
 
 DIMENSIONS_BY_KEY = {d.key: d for d in DIMENSIONS}

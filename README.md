@@ -21,6 +21,7 @@ reported `n/a` — never a fake pass.
 | Prediction calibration | `calibration-log reconcile` | published predictions vs their source of truth |
 | Quality drift | `drift-watch report` | quality-signal drift store |
 | Authorization scope | `scope-gate <target>` | a declared target is in authorized scope |
+| AI-app security leads | `aisec-check scan <root>` | lexical/AST leads for AI-app vuln classes (candidate findings, not proofs) |
 
 Each of these is a separate, independently-shipped checker. `verify-suite` adds
 only the **dispatch spine**: a dimension registry, the subprocess dispatcher, the
@@ -73,6 +74,10 @@ the rollup to `verify-suite-audit.jsonl`. Exit code is CI-gateable:
   specific deterministic gates that applied all passed* — not "provably reliable".
 - The underlying `firewall` / `grounded` checkers are **lexical/deterministic**.
   This is **not** semantic grounding.
+- The **security** dimension (`aisec-check`) is a **lexical/AST** scanner: its
+  findings are **leads** a human must confirm (expect false positives and
+  negatives), **not** data-flow proofs of exploitability. A `refuse` means "a
+  high/critical-severity lead was found here", not "proven vulnerable".
 - **No track record is claimed.** The calibration dimension only runs if the
   project ships a published/source pair to reconcile; it does not assert any
   historical hit-rate.

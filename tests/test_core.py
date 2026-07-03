@@ -14,6 +14,7 @@ from verify_suite.core import (
     Dimension,
     DimensionResult,
     Verdict,
+    map_aisec_severity,
     map_allow_deny,
     map_verity,
     map_zero_clean,
@@ -21,6 +22,7 @@ from verify_suite.core import (
     run_dimension,
     score,
 )
+from verify_suite.registry import DIMENSIONS_BY_KEY, _cmd_security
 
 
 # ── exit-code maps ────────────────────────────────────────────────────────────
@@ -42,6 +44,76 @@ def test_map_allow_deny():
     assert map_allow_deny(0) == "pass"
     assert map_allow_deny(1) == "refuse"   # a DENY is a hard refuse, not a warn
     assert map_allow_deny(-1) == "error"
+
+
+def test_map_aisec_severity():
+    # aisec-check scan exit = worst severity: 0 none · 1 low · 2 med · 3 high · 4 crit
+    assert map_aisec_severity(0) == "pass"     # clean
+    assert map_aisec_severity(1) == "warn"     # low lead
+    assert map_aisec_severity(2) == "warn"     # medium lead
+    assert map_aisec_severity(3) == "refuse"   # high
+    assert map_aisec_severity(4) == "refuse"   # critical
+    assert map_aisec_severity(9) == "refuse"   # unknown-higher -> refuse (fail safe)
+    assert map_aisec_severity(-1) == "error"   # our run-failure sentinel
+
+
+# ── the security dimension (aisec-check) ──────────────────────────────────────
+def test_security_dimension_is_registered():
+    d = DIMENSIONS_BY_KEY["security"]
+    assert d.cli == "aisec-check"
+    assert d.exit_map is map_aisec_severity
+
+
+def test_security_cmd_builds_scan_when_python_present(tmp_path):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    tail = _cmd_security("/bin/aisec-check", tmp_path)
+    assert tail == ["scan", str(tmp_path)]
+
+
+def test_security_cmd_na_when_no_python(tmp_path):
+    (tmp_path / "README.md").write_text("# docs\n", encoding="utf-8")
+    assert _cmd_security("/bin/aisec-check", tmp_path) is None
+
+
+def _security_dim():
+    return DIMENSIONS_BY_KEY["security"]
+
+
+def test_security_exit0_is_pass(monkeypatch, tmp_path):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.setattr(core, "resolve_dimension", lambda d: ["/bin/aisec-check"])
+    monkeypatch.setattr(core, "_run", lambda cmd, timeout=120: (0, "0 finding(s); worst=none"))
+    r = run_dimension(_security_dim(), tmp_path)
+    assert r.status == "pass"
+    assert r.verdict.exit_code == 0
+
+
+def test_security_exit2_medium_is_warn(monkeypatch, tmp_path):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.setattr(core, "resolve_dimension", lambda d: ["/bin/aisec-check"])
+    monkeypatch.setattr(core, "_run", lambda cmd, timeout=120: (2, "worst=medium"))
+    r = run_dimension(_security_dim(), tmp_path)
+    assert r.status == "warn"       # low/medium leads => review, not refuse
+    assert r.verdict.exit_code == 2
+
+
+def test_security_exit4_critical_is_refuse(monkeypatch, tmp_path):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.setattr(core, "resolve_dimension", lambda d: ["/bin/aisec-check"])
+    monkeypatch.setattr(core, "_run", lambda cmd, timeout=120: (4, "worst=critical"))
+    r = run_dimension(_security_dim(), tmp_path)
+    assert r.status == "refuse"
+    assert r.verdict.exit_code == 4
+
+
+def test_security_na_when_aisec_absent(monkeypatch, tmp_path):
+    # aisec-check not installed => gate unavailable => n/a, never a fake pass
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.setattr(core, "resolve_dimension", lambda d: None)
+    r = run_dimension(_security_dim(), tmp_path)
+    assert r.available is False
+    assert r.status == "na"
+    assert r.applicable is False
 
 
 # ── dimension helpers ─────────────────────────────────────────────────────────

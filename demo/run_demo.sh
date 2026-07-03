@@ -3,10 +3,13 @@
 #
 # It runs `verify-suite check` over demo/sample_app/ — a tiny real project that
 # ships a README (doc claims), a truth.yaml (ground truth), a ```json result-claim,
-# and a citation — so the firewall / verity / grounded dimensions actually run.
-# Gates that are not installed, and dimensions with no matching artifact, report
-# n/a. The aggregate rollup is sealed through verity.audit; the demo then
-# re-verifies that chain with verity's OWN verifier.
+# a citation, AND a planted vulnerable source file (model_loader.py: torch.load
+# without weights_only=True) — so the firewall / verity / grounded dimensions AND
+# the aisec-check security dimension all actually run. The security dimension flags
+# the unsafe-deserialization lead (high) → a REFUSE verdict, all folded into the
+# ONE sealed rollup. Gates that are not installed, and dimensions with no matching
+# artifact, report n/a. The aggregate rollup is sealed through verity.audit; the
+# demo then re-verifies that chain with verity's OWN verifier.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"

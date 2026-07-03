@@ -7,6 +7,9 @@ artifacts each text-level dimension needs, so the run exercises real gates:
 - `README.md` + `truth.yaml` → the **Doc/output over-claims** dimension (`firewall`)
 - a ```` ```json ```` result-claim block in the README → **Result-claim hygiene** (`verity`)
 - a citation `[1]` → **Citation grounding** (`grounded`)
+- a planted vulnerable source file `model_loader.py` (`torch.load` without
+  `weights_only=True`) → the **AI-app security leads** dimension (`aisec-check`),
+  which flags the unsafe-deserialization lead (high severity) as **REFUSE**
 
 Run it:
 
@@ -27,8 +30,10 @@ Run it:
   audit verifier** to show the seal is real, not decorative.
 
 A representative run on Python 3.14 (scorecheck / groundtruth pin `<3.13`, so they
-are honestly `n/a` here): 3 applicable dimensions, 2 pass + 1 review →
-**level 4/5**, sealed, chain `verify` returns `intact`.
+are honestly `n/a` here): 4 applicable dimensions, 2 pass + 1 review + 1 refuse
+(the planted security lead) → **level 3/5**, worst verdict REFUSE, sealed, chain
+`verify` returns `intact`. Security is a full member of the ONE sealed rollup —
+not a separate scan.
 
 The `verify-suite check` outputs (`verify-suite-report.md`,
 `verify-suite-receipt.json`, `verify-suite-audit.jsonl`) are written into

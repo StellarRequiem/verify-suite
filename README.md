@@ -64,7 +64,7 @@ the aggregate through one audit chain.
 | Prediction calibration | **`calibration-log`** | published predictions vs their source of truth |
 | Quality drift | **`drift-watch`** | silent quality-signal erosion |
 | Authorization scope | **`scope-gate`** | a target is inside declared authorized scope |
-| AI-app security leads | **`aisec-check`** | lexical/AST leads for AI-app vuln classes (candidates, not proofs) |
+| AI-app security leads | **`aisec-check`** | lexical/AST **lead-generator** for AI-app vuln classes — leads, not proofs; ~3% measured precision on real code, a human confirms each (triage aid, not a precision gate) |
 
 ## Run it
 
@@ -131,7 +131,7 @@ reported `n/a` — never a fake pass.
 | Prediction calibration | `calibration-log reconcile` | published predictions vs their source of truth |
 | Quality drift | `drift-watch report` | quality-signal drift store |
 | Authorization scope | `scope-gate <target>` | a declared target is in authorized scope |
-| AI-app security leads | `aisec-check scan <root>` | lexical/AST leads for AI-app vuln classes (candidate findings, not proofs) |
+| AI-app security leads | `aisec-check scan <root>` | lexical/AST **lead-generator** for AI-app vuln classes — candidate leads, not proofs; ~3% measured precision on real code, a human confirms each |
 
 Each of these is a separate, independently-shipped checker. `verify-suite` adds
 only the **dispatch spine**: a dimension registry, the subprocess dispatcher, the
@@ -193,11 +193,15 @@ Every line below is a limit, stated plainly so the pitch above can't be misread.
 - **It orchestrates; it does not verify anything itself.** A `5/5` means *these
   specific deterministic gates that applied all passed* — not "provably reliable".
   The level is a rollup of gate verdicts, not a reliability guarantee.
-- **The security dimension emits LEADS, not proofs.** `aisec-check` is a
-  **lexical/AST** scanner: it matches syntactic shapes, not data flow or
-  reachability. Every finding is a **candidate a human must confirm** — expect
-  false positives *and* false negatives. A `refuse` means "a high/critical-severity
-  lead was found here — look", **not** "proven exploitable".
+- **The security dimension is a LEAD-GENERATOR, not a precision gate.**
+  `aisec-check` is a **lexical/AST** scanner: it matches syntactic shapes, not data
+  flow or reachability. Every finding is a **candidate a human must confirm** — expect
+  false positives *and* false negatives. On a real benchmark (59 public AI repos,
+  2026-07-04) its adjudicated precision measured **~3–4%** (6 true positives in 140
+  sampled leads); only `unsafe-deserialization` and `path-traversal` carried reliable
+  signal. A `refuse` means "a high/critical-severity lead was found here — a human
+  should look", **not** "proven exploitable". It is a triage aid within the layer, not
+  a standalone precision gate.
 - **The underlying claim/citation checkers are lexical/deterministic.** `firewall`
   and `grounded` match terms and resolve references syntactically. This is **not**
   semantic grounding.

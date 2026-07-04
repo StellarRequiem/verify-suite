@@ -69,7 +69,7 @@ something anyone can re-derive from the receipt.
 | Piece | Role |
 |---|---|
 | **verify-suite** | The spine — runs the dimensions and folds verdicts into one rollup. 9 dimensions installed; 30 tests passing. |
-| **aisec-check** | The security dimension — a read-only lexical/AST scanner for vulnerability classes recurring in AI-built apps. 56 tests passing. |
+| **aisec-check** | The security dimension — a read-only lexical/AST **lead-generator** for vulnerability classes recurring in AI-built apps (leads, not proofs; ~3–4% measured precision on real code — a human confirms each). 56 tests passing. |
 | **scorecheck** | The benchmark-receipt dimension — checks that a reported benchmark score has a receipt behind it. 21 tests passing. |
 | **verity** | The sealing substrate — one pinned audit chain the rollup seals through, and the independent verifier that re-derives it. |
 
@@ -79,9 +79,15 @@ This is a first-cut composition of existing, individually tested tools. It runs
 **locally** and is not a hosted product. Three limits are load-bearing and stated
 up front, not buried:
 
-- **Security findings are leads, not proofs.** aisec-check is a lexical/AST
-  first pass. It tells a reviewer *where to look* — expect false positives and
-  false negatives. It does not prove exploitability.
+- **Security findings are leads, not proofs — it is a lead-generator, not a
+  precision gate.** aisec-check is a lexical/AST first pass. It tells a reviewer
+  *where to look* — expect false positives and false negatives. On a real
+  benchmark (59 public AI repos, 2026-07-04) its adjudicated precision measured
+  **~3–4%** (6 true positives in 140 sampled leads); only `unsafe-deserialization`
+  and `path-traversal` carried reliable signal, the rest was shape-only noise. A
+  `refuse` here means "high/critical-severity leads were found — a human should
+  look", **not** "proven exploitable". It is a triage aid within the layer, not a
+  standalone precision gate.
 - **The seal is unkeyed = integrity, not tamper-evidence.** The audit chain
   catches corruption, reordering, and truncation of the receipt. It is *not*
   tamper-evidence on its own; that requires a key or an anchored chain head. (This

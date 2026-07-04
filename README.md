@@ -1,9 +1,19 @@
-# verify-suite — The Verification Layer
+# verify-suite — a reference implementation for adjudicating AI-build claims
 
-> **A verification layer for AI-built software.** One CLI that mechanically
-> adjudicates what an AI build *claims* against what it *ships* — its result-claims,
-> its benchmark scores, its docs and citations, and its **security** — and seals
-> every verdict into one receipt anyone can re-derive.
+> **A reference implementation of how I mechanically adjudicate what an AI build
+> *claims* against what it *ships*** — its result-claims, its benchmark scores, its
+> docs and citations, and its **security** — sealing every verdict into one receipt
+> anyone can re-derive. It is a working demonstration of the method and its limits,
+> not a product with users: one CLI that composes existing checkers into a single
+> pass over a repository.
+
+> **Status / maturity.** Early reference implementation. It *composes* existing,
+> individually-tested checkers behind a dispatch spine — it re-implements none of
+> them — and its end-to-end demo runs over a deliberately-planted sample app, not a
+> real-world catch. There are **no external users yet**, and validation against
+> real-world third-party codebases is explicit future work. The point it makes today
+> is about the *mechanism* — how claims get adjudicated and sealed — not a track
+> record.
 
 ## The problem
 
@@ -101,9 +111,9 @@ the committed payload and the chain verifies `intact` (see
 
 ---
 
-**One spine for a family of verification checkers.** The rest of this document is
-the reference: what each dimension composes, the seal, install, and — read it —
-the honest scope.
+**One spine for a family of verification checkers — a reference implementation, not
+a product to adopt.** The rest of this document is the reference: what each dimension
+composes, the seal, install, and — read it — the honest scope.
 
 It **orchestrates existing tools and re-implements none of them.** Every dimension
 shells out to that tool's own CLI. If a tool is not installed, its dimension is
@@ -210,6 +220,12 @@ Every line below is a limit, stated plainly so the pitch above can't be misread.
 `demo/run_demo.sh` builds a tiny sample "AI-built app" under `demo/sample_app/`,
 runs `verify-suite check` over it end-to-end, and prints the report + the sealed
 receipt. See [`demo/README.md`](demo/README.md).
+
+> **The demo is a deliberately-planted reference sample, not a real-world catch.**
+> `demo/sample_app/` is authored to contain exactly the artifacts the dimensions
+> check — including a planted vulnerable source file — so the run *illustrates the
+> mechanism* end-to-end. It is not evidence that the suite has found real-world bugs;
+> real-world-code validation is future work (see the Status note at the top).
 
 ## Layout
 

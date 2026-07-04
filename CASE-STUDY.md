@@ -1,6 +1,8 @@
-# The verification layer for AI-built software
+# Adjudicating what an AI build claims — a reference implementation
 
-*A case study in mechanically adjudicating what an AI build claims — and ships.*
+*A case study in the method: how I mechanically adjudicate what an AI build claims
+against what it ships. This documents an early reference implementation and its
+stated limits — not a product with users.*
 
 ## The problem
 
@@ -32,12 +34,15 @@ tool that already exists and does one job — the suite is the spine that runs t
 together and folds their verdicts into a single sealed rollup. It re-implements
 none of them.
 
-## The proof
+## The mechanism, demonstrated
 
 One command runs the full battery over a project and produces one re-derivable,
-sealed receipt. Run live against the bundled sample app — a small project that
-deliberately ships a README, a ground-truth file, a JSON result-claim, a citation,
-and a planted vulnerable source file:
+sealed receipt. What follows is **not** a real-world catch — it is the mechanism run
+against a deliberately-planted reference sample. The bundled sample app is a small
+project authored to ship exactly what the dimensions check: a README, a ground-truth
+file, a JSON result-claim, a citation, and a planted vulnerable source file. So the
+run below shows *how* adjudication and sealing work end-to-end, not that the suite has
+found bugs in the wild (that validation is future work — see the honest scope):
 
 ```
 Unified reliability level: 3/5 · 2/4 applicable dimensions passed · 5 n/a · worst: refuse
